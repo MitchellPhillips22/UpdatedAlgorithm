@@ -12,9 +12,7 @@ class FilesTableViewCell: UITableViewCell {
 
     @IBOutlet weak var fileNameLabel: UILabel!
     
-    @IBAction func playFileButton(sender: UIButton) {
-    }
-    override func awakeFromNib() {
+      override func awakeFromNib() {
         super.awakeFromNib()
        
     }

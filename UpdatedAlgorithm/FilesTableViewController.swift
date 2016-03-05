@@ -88,10 +88,11 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
         view.addSubview(waveView)
         
         setUpRecorder()
+        recorder.meteringEnabled = true
         recordAudioOnClick()
         
         recorder.updateMeters()
-        startLevel = recorder.averagePowerForChannel(1)
+        startLevel = recorder.averagePowerForChannel(0)
         startTime()
     }
     
@@ -166,7 +167,7 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
         
         getRecorderFileURLPath()
         
-        print(soundFileURL)
+//        print(soundFileURL)
         let recorderSettings:[String:AnyObject] = [AVFormatIDKey : NSNumber(unsignedInt: kAudioFormatMPEG4AAC), AVSampleRateKey : 44100.0 as NSNumber, AVNumberOfChannelsKey : 2 as NSNumber, AVEncoderAudioQualityKey : AVAudioQuality.High.rawValue as NSNumber,AVEncoderBitRateKey : 320000 as NSNumber]
         
         do {
@@ -232,14 +233,8 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
     
     @IBAction func playRecord(){
         
-        if !isPlaying && player != nil{
+        if !isPlaying && player != nil {
             isPlaying = true
-            
-
-            
-          
-        
-            waveViewInputType = SCSiriWaveformViewInputType.Player
             
             player.play()
             runMeterTimer()
@@ -258,7 +253,7 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
             f.title = fileName
             f.loadUrl = soundFileURL
             self.arrayOfFiles.append(f)
-            print(arrayOfFiles.count)
+//            print(arrayOfFiles.count)
             self.fileTableView.reloadData()
         }
 
@@ -272,8 +267,8 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
             startLevel = currentLevel
         }
         
-        print( "\(endLevel) :end  start: \(startLevel) " )
-        endLevel = recorder.averagePowerForChannel(1)
+        print( "\(endLevel) :end  start: \(startLevel) \(isRecording) " )
+        endLevel = recorder.averagePowerForChannel(0)
     }
     
     private func startTime()
@@ -291,8 +286,14 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
         {
             print("Splitting audio")
             splitAudio()
+            recorder.meteringEnabled = true
+            recorder.updateMeters()
         }
-        
+        else if  endLevel < -110
+        {
+            setUpRecorder()
+         
+        }
     }
     
     
@@ -301,12 +302,27 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
     ///start new file with name
     private func splitAudio() ->Void
     {
-        recorder.stop()
-        
-        //Call to write
-        stopRecord()
-        
-        setUpRecorder()
+         recorder.stop()
+//        do
+//        {
+//            let play = try AVAudioPlayer.init(contentsOfURL: soundFileURL)
+//            if(play.duration < 4.0)
+//            {
+//                recorder.deleteRecording()
+//            }
+//            else
+//            {
+//                //Call to write
+//                stopRecord()
+//                addFileToArray()
+//            }
+//        }
+//        catch
+//        {
+//          print("duration fail")
+//        }
+
+       setUpRecorder()
         do{
             try AVAudioSession.sharedInstance().setActive(true)
             recorder.record()
@@ -333,7 +349,7 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
         return documentsDirectory
     }
     
-    private func getRecorderFileURLPath() -> String {
+    private func getRecorderFileURLPath()  {
         
         let format = NSDateFormatter()
         format.dateFormat = "hh.mm.ssSSS"
@@ -343,15 +359,17 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
             fileName = currentFileName
             let documentDirectory = NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0]
             soundFileURL = documentDirectory.URLByAppendingPathComponent(currentFileName)
-            return currentFileName
+            
         }else{
             
             let currentFileName = "\(format.stringFromDate(NSDate())).m4a"
             let documentDirectory = NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0]
             soundFileURL = documentDirectory.URLByAppendingPathComponent(currentFileName)
             fileName = currentFileName
-            return currentFileName
+            
         }
+        
+        //delete start?
         
     }
     
@@ -362,7 +380,7 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
             try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
             player = try AVAudioPlayer(contentsOfURL: recorder.url)
             player.delegate = self
-            player.meteringEnabled = true
+            
             player.prepareToPlay()
         }catch let error as NSError{
             print(error)
@@ -378,7 +396,25 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
     
     func audioRecorderDidFinishRecording(recorder: AVAudioRecorder, successfully flag: Bool) {
         
+            let play = AVPlayer(URL: soundFileURL)
+            let derp = play.currentItem
+            let time = derp?.duration
+            let erp = CMTimeGetSeconds(time!)
+            if(erp < 4.0)
+            {
+                recorder.deleteRecording()
+                isRecording = true
+            }
+            else
+            {
+                //Call to write
+                stopRecord()
+                addFileToArray()
+            }
+        
+        isRecording = true
         self.recordAudioOnClickRelease()
+        
     }
     
     //MARK: -TableView
