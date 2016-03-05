@@ -2,7 +2,7 @@
 //  ISAudioRecorderViewDelegate.swift
 //  UpdatedAlgorithm
 //
-//  Created by Sean Calkins on 3/5/16.
+//  Created by Schaouwnn Calkins on 3/5/16.
 //  Copyright © 2016 Wasted Potential LLC. All rights reserved.
 //
 

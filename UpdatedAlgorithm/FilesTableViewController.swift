@@ -10,11 +10,6 @@ import UIKit
 import CoreData
 import AVFoundation
 
-public enum SCSiriWaveformViewInputType{
-    case Recorder
-    case Player
-}
-
 class FilesTableViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, NSFetchedResultsControllerDelegate, AVAudioRecorderDelegate, AVAudioPlayerDelegate {
     
     var userInfo = ""
@@ -36,8 +31,6 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
     private var toolBar:UIToolbar!
     private var isRecording = false
     private var isPlaying = false
-    private var waveView:SCSiriWaveformView!
-    private var waveViewInputType:SCSiriWaveformViewInputType!
     private var recorder:AVAudioRecorder!
     private var player:AVAudioPlayer!
     private var soundFileURL:NSURL!
@@ -82,12 +75,8 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
         
         timer = NSTimer()
         waitTime = 1.500;
-        
-        let waveRect = CGRectMake(0, view.bounds.midY, view.bounds.width, 40.0)
-        waveView = SCSiriWaveformView.init(frame: waveRect)
-        view.addSubview(waveView)
-        
         setUpRecorder()
+        
         recorder.meteringEnabled = true
         recordAudioOnClick()
         
@@ -97,25 +86,6 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
     }
     
     
-    func updateMeters()
-    {
-        
-        var normalizedValue:Float = 0.0
-        switch waveViewInputType{
-        case SCSiriWaveformViewInputType.Recorder?:
-            recorder.updateMeters()
-            normalizedValue = normalizedPowerLevelFromDecibels(recorder.averagePowerForChannel(0))
-            break
-        case SCSiriWaveformViewInputType.Player?:
-            player.updateMeters()
-            normalizedValue = normalizedPowerLevelFromDecibels(player.averagePowerForChannel(0))
-            break
-        default:
-            break
-        }
-        
-        waveView.updateWithLevel(CGFloat(normalizedValue))
-    }
     
     private func normalizedPowerLevelFromDecibels(decibels:Float) -> Float{
         if decibels < -40 {
@@ -149,10 +119,7 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
 //            }
             
        
-            
-            waveViewInputType = SCSiriWaveformViewInputType.Recorder
-            setUpRecorder()
-            
+                     
             do{
                 try AVAudioSession.sharedInstance().setActive(true)
                 recorder.record()
@@ -197,7 +164,6 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
             meterTimer.invalidate()
             timer.invalidate()
             
-            waveViewInputType = nil
             setUpPlayer()
             
         }
@@ -215,8 +181,8 @@ class FilesTableViewController: UIViewController, UITableViewDataSource, UITable
             meterTimer.invalidate()
         }
         
-        waveView = nil
-        toolBar = nil
+        
+        
         recorder = nil
         playBtn = nil
         stopBtn = nil
